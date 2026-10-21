@@ -1,0 +1,1258 @@
+/*
+ * Application shell, workspace, apparatus panel, question paper, report, calculator and tools.
+ * Prefix: .vl-   Colours come only from styles/tokens.css (light + [data-theme="dark"]).
+ * Calm, high-contrast exam aesthetic; focus is always visible; touch targets are at least var(--tap) (44 px)
+ * on touch screens; state is never shown by colour alone (icons and words are always present).
+ */
+
+/* =================================================================== base */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--font-size);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4, h5 { line-height: 1.25; margin: 0 0 0.5em; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.15rem; }
+h4 { font-size: 1.02rem; }
+p { margin: 0 0 0.75em; }
+a { color: var(--accent); text-underline-offset: 0.15em; }
+code, kbd { font-family: var(--font-mono); }
+abbr[title] { text-decoration: none; }
+[hidden] { display: none !important; }
+
+:focus { outline: none; }
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(0, 0, 0, 0.55);
+}
+h1:focus, h1:focus-visible, [tabindex="-1"]:focus-visible { outline: none; box-shadow: none; }
+.vl-report-part:focus-visible, .vl-tabpanel:focus-visible { outline: 3px solid var(--focus); }
+
+.vl-sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+.vl-offscreen {
+  position: fixed !important;
+  left: -12000px; top: 0;
+  width: 900px;
+  opacity: 0;
+  pointer-events: none;
+}
+/* graph exports are drawn here at a fixed size, whatever the size of the window */
+.vl-export-holder { width: 900px !important; min-width: 900px; max-width: none; }
+
+.vl-skip {
+  position: absolute; left: 8px; top: -60px; z-index: 100;
+  background: var(--accent); color: var(--accent-ink);
+  padding: 10px 16px; border-radius: var(--radius); font-weight: 700;
+}
+.vl-skip:focus { top: 8px; }
+
+.vl-muted, .vl-help { color: var(--muted); }
+.vl-help { font-size: 0.92rem; margin: 0.15em 0 0.4em; }
+.vl-error, .vl-field-error { color: var(--bad); font-weight: 600; }
+.vl-ok-text { color: var(--ok); font-weight: 600; }
+.vl-bad-text { color: var(--bad); font-weight: 600; }
+.vl-warn-text { color: var(--warn); font-weight: 600; }
+.vl-verify { color: var(--muted); font-style: italic; }
+.vl-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.vl-app:focus { outline: none; }
+main.vl-app { flex: 1 0 auto; display: block; }
+
+.vl-boot { padding: 40px 16px; text-align: center; color: var(--muted); }
+
+/* =================================================================== buttons */
+
+.vl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 8px 16px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+.vl-btn:hover { background: var(--accent-soft); border-color: var(--accent); }
+.vl-btn:active { transform: translateY(1px); }
+.vl-btn[disabled], .vl-btn[aria-disabled="true"] {
+  cursor: not-allowed; opacity: 0.6; transform: none; filter: none;
+  background: var(--bg); border-color: var(--line); color: var(--muted);
+}
+.vl-btn--primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.vl-btn--primary:hover { background: var(--accent); filter: brightness(1.12); color: var(--accent-ink); }
+.vl-btn--danger { background: var(--bad); border-color: var(--bad); color: var(--panel); }
+.vl-btn--danger:hover { background: var(--bad); filter: brightness(1.1); }
+.vl-btn--danger-text { color: var(--bad); }
+.vl-btn--ghost { border-color: transparent; background: transparent; }
+.vl-btn--ghost:hover { border-color: var(--line-strong); }
+.vl-btn--small { min-height: 36px; min-width: 36px; padding: 4px 10px; font-size: 0.92rem; }
+.vl-btn--large { min-height: 52px; padding: 10px 26px; font-size: 1.1rem; }
+.vl-btn--icon { padding: 4px; font-size: 1.35rem; font-weight: 700; }
+.vl-btn--chip { min-height: 36px; padding: 4px 12px; border-radius: 999px; font-size: 0.92rem; font-weight: 600; }
+.vl-btn--ui { font-family: var(--font-ui); }
+.vl-btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.vl-linkbtn {
+  background: none; border: 0; padding: 4px 0; min-height: 36px;
+  color: var(--accent); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .vl-btn--small, .vl-btn--chip, .vl-linkbtn { min-height: var(--tap); min-width: var(--tap); }
+}
+
+/* =================================================================== header */
+
+.vl-header {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 2px solid var(--line);
+}
+.vl-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  min-height: var(--tap);
+  border-radius: var(--radius);
+}
+.vl-brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 40px; height: 40px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-family: var(--font-paper);
+  font-size: 1.1rem;
+}
+.vl-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+.vl-brand-name { font-weight: 800; font-size: 1.05rem; }
+.vl-brand-sub { font-size: 0.8rem; color: var(--muted); }
+.vl-header-ctx { flex: 1 1 320px; min-width: 0; }
+.vl-header-menu { position: relative; margin-left: auto; }
+.vl-menu-icon { font-size: 1.15rem; }
+.vl-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 240px;
+  padding: 6px;
+  background: var(--panel);
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  z-index: 40;
+}
+.vl-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.vl-menu-item:hover, .vl-menu-item:focus-visible { background: var(--accent-soft); }
+.vl-menu-sep { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+.vl-menu { max-height: calc(100vh - 70px); max-height: calc(100dvh - 70px); overflow-y: auto; overscroll-behavior: contain; }
+/* session items in the menu: only on small screens (see "compact workspace header" below) */
+.vl-menu-ws { display: none; }
+.vl-menu-item--primary { font-weight: 800; color: var(--accent); }
+.vl-menu-status, .vl-menu-status:disabled { cursor: default; color: var(--muted); font-size: 0.92rem; opacity: 1; }
+.vl-menu-status:hover { background: transparent; }
+
+/* workspace context in the header: row 1 = mode + title, row 2 (.vl-header-bar) = question, seed, timer, save, actions */
+.vl-ws-meta { display: flex; align-items: center; gap: 6px 12px; min-width: 0; }
+.vl-ws-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vl-header-bar {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+.vl-header-bar:empty { display: none; }
+body.vl-body--ws .vl-brand-sub { display: none; }
+body.vl-body--ws .vl-header-ctx { flex-basis: 200px; }
+.vl-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  font-size: 0.8rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.vl-badge--exam { background: var(--ink); color: var(--panel); }
+.vl-badge--practice { background: var(--panel); color: var(--ink); }
+.vl-badge--drill { background: var(--accent-soft); color: var(--ink); }
+.vl-seed { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.vl-seed-label { font-size: 0.85rem; color: var(--muted); }
+.vl-seed-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 2px 6px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  letter-spacing: 0.03em;
+}
+.vl-save { font-size: 0.88rem; color: var(--muted); white-space: nowrap; }
+.vl-save--saved { color: var(--ok); }
+.vl-save--error, .vl-save--nostore { color: var(--bad); font-weight: 700; }
+.vl-ws-done { font-weight: 700; color: var(--ok); }
+
+/* =================================================================== timer */
+
+.vl-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 2px 10px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.vl-timer-label { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+.vl-timer-clock { font-family: var(--font-mono); font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.vl-timer-badge { font-size: 0.85rem; font-weight: 800; }
+.vl-timer-badge:empty { display: none; }
+.vl-timer-hide {
+  min-height: 36px; padding: 2px 8px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: transparent; color: var(--ink); font: inherit; font-size: 0.82rem; cursor: pointer;
+}
+.vl-timer--warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
+.vl-timer--warn .vl-timer-clock, .vl-timer--warn .vl-timer-label { color: var(--warn); }
+.vl-timer--urgent, .vl-timer--ended { border-color: var(--bad); background: var(--bad-soft); }
+.vl-timer--urgent .vl-timer-clock, .vl-timer--urgent .vl-timer-badge,
+.vl-timer--ended .vl-timer-clock, .vl-timer--ended .vl-timer-badge { color: var(--bad); }
+.vl-timer--hidden .vl-timer-clock { color: var(--muted); }
+@media (pointer: coarse) { .vl-timer-hide { min-height: var(--tap); } }
+
+/* =================================================================== pages */
+
+.vl-page {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+.vl-page--wide { max-width: 1400px; }
+.vl-lead { font-size: 1.08rem; max-width: 52em; }
+
+.vl-hero {
+  padding: 28px 28px 20px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--accent);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+}
+.vl-hero-title { font-family: var(--font-paper); font-size: 2.2rem; margin-bottom: 0.2em; }
+.vl-hero-lead { font-size: 1.15rem; font-weight: 600; }
+.vl-hero p { max-width: 54em; }
+.vl-hero-resume { margin-top: 12px; }
+
+.vl-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.vl-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 140px;
+  padding: 18px 44px 18px 18px;
+  background: var(--panel);
+  color: var(--ink);
+  text-decoration: none;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.vl-card:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); }
+.vl-card-title { font-size: 1.2rem; font-weight: 800; }
+.vl-card-text { color: var(--muted); }
+.vl-card-go { position: absolute; right: 16px; top: 16px; font-size: 1.4rem; color: var(--accent); }
+.vl-card--exam { border-top: 6px solid var(--ink); }
+.vl-card--practice { border-top: 6px solid var(--accent); }
+.vl-card--drills { border-top: 6px solid var(--skill-pdo); }
+.vl-card--instruments { border-top: 6px solid var(--skill-ace); }
+.vl-card--progress { border-top: 6px solid var(--skill-mmo); }
+.vl-card--sessions { border-top: 6px solid var(--line-strong); }
+
+.vl-about {
+  padding: 20px 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.vl-about p { max-width: 60em; }
+.vl-skills { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.vl-skill { padding: 10px 14px; border: 1px solid var(--line); border-left-width: 6px; border-radius: 6px; background: var(--bg); }
+.vl-skill--mmo { border-left-color: var(--skill-mmo); }
+.vl-skill--pdo { border-left-color: var(--skill-pdo); }
+.vl-skill--ace { border-left-color: var(--skill-ace); }
+
+.vl-notice {
+  padding: 12px 16px;
+  border: 2px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  margin-bottom: 16px;
+}
+.vl-notice--warn { border-color: var(--warn); background: var(--warn-soft); color: var(--ink); }
+.vl-notice--bad { border-color: var(--bad); background: var(--bad-soft); color: var(--ink); }
+.vl-placeholder-card {
+  padding: 24px;
+  margin: 16px;
+  background: var(--panel);
+  border: 2px dashed var(--line-strong);
+  border-radius: var(--radius);
+  color: var(--ink);
+}
+.vl-placeholder { color: var(--muted); font-style: italic; }
+
+/* =================================================================== forms */
+
+.vl-form { display: grid; gap: 20px; max-width: 760px; }
+.vl-form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.vl-choices { border: 0; padding: 0; margin: 0; display: grid; gap: 12px; }
+.vl-choices--inline { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.vl-choices--inline > legend { grid-column: 1 / -1; }
+.vl-legend, .vl-label { display: block; font-weight: 700; margin-bottom: 6px; }
+.vl-legend { font-size: 1.1rem; }
+.vl-choice-group { display: grid; gap: 8px; padding: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.vl-choice-exp { font-size: 1.12rem; margin: 0 0 4px; }
+.vl-choice-topic { font-weight: 400; color: var(--muted); font-size: 0.95rem; }
+
+.vl-radio-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  cursor: pointer;
+}
+.vl-radio-card:hover { border-color: var(--accent); }
+.vl-radio-card:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
+.vl-radio-input { width: 22px; height: 22px; margin: 2px 0 0; flex: none; accent-color: var(--accent); }
+.vl-radio-card-body { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.vl-radio-card-title { font-weight: 700; }
+.vl-radio-card-text { flex-basis: 100%; color: var(--muted); font-size: 0.95rem; }
+.vl-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--bg);
+}
+.vl-tag--q1 { border-color: var(--skill-mmo); }
+.vl-tag--q2 { border-color: var(--skill-ace); }
+.vl-tag--ext { border-color: var(--skill-pdo); border-style: dashed; }
+
+.vl-field { display: grid; gap: 2px; }
+.vl-field--inline { grid-template-columns: minmax(0, 1fr) minmax(0, 12em); align-items: center; gap: 8px; }
+.vl-field--inline .vl-label { margin: 0; font-weight: 600; }
+.vl-input {
+  min-height: var(--tap);
+  padding: 8px 10px;
+  border: 2px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  width: 100%;
+}
+.vl-input:focus-visible, .vl-input:focus { border-color: var(--accent); outline: 3px solid var(--focus); outline-offset: 1px; }
+.vl-input[aria-invalid="true"] { border-color: var(--bad); background: var(--bad-soft); }
+.vl-input--seed { max-width: 18em; font-family: var(--font-mono); font-size: 1.1rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.vl-input--num { font-family: var(--font-mono); }
+.vl-input--cell { min-width: 6em; padding: 6px 8px; }
+.vl-check { display: flex; align-items: center; gap: 10px; min-height: var(--tap); }
+.vl-check input { width: 22px; height: 22px; accent-color: var(--accent); }
+.vl-radios { border: 0; padding: 0; margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.vl-radio { display: flex; align-items: center; gap: 8px; min-height: var(--tap); }
+.vl-radio input { width: 20px; height: 20px; accent-color: var(--accent); }
+.vl-fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px 12px; margin: 0; display: grid; gap: 6px; }
+.vl-fieldset legend { font-weight: 700; padding: 0 4px; }
+.vl-details { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 14px; }
+.vl-details summary { min-height: var(--tap); display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+
+/* =================================================================== workspace layout */
+
+body.vl-body--ws { height: 100vh; height: 100dvh; overflow: hidden; }
+body.vl-body--ws main.vl-app { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+
+.vl-ws { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.vl-ws-spacer { flex: 1 1 auto; }
+/* persistent notices above the workspace: work not saved, session changed in another tab */
+.vl-ws-banners { flex: none; }
+.vl-ws-banners:empty { display: none; }
+.vl-ws-banner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+  margin: 0; padding: 8px 12px;
+  border-width: 0 0 2px; border-radius: 0;
+}
+.vl-ws-banner-text { flex: 1 1 20em; min-width: 0; }
+.vl-ws-banner-close { font-size: 1.1rem; }
+.vl-ws-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.vl-qswitch { display: flex; gap: 6px; }
+.vl-qswitch-btn--done::after { content: " ✓"; }
+.vl-narrow-toggle { display: none; gap: 0; }
+.vl-narrow-toggle .vl-btn { border-radius: 0; }
+.vl-narrow-toggle .vl-btn:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.vl-narrow-toggle .vl-btn:last-child { border-radius: 0 var(--radius) var(--radius) 0; border-left: 0; }
+
+.vl-ws-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+}
+.vl-ws-left, .vl-ws-right { min-height: 0; min-width: 0; }
+.vl-ws-left {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  border-right: 2px solid var(--line);
+  background: var(--bench);
+}
+.vl-ws-right { display: flex; flex-direction: column; background: var(--bg); }
+
+/* =================================================================== tabs */
+
+.vl-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px 0;
+  background: var(--panel);
+  border-bottom: 2px solid var(--line-strong);
+  overflow-x: auto;
+  flex: none;
+}
+.vl-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 8px 14px;
+  border: 2px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.vl-tab:hover { color: var(--ink); background: var(--bg); }
+.vl-tab[aria-selected="true"] {
+  color: var(--ink);
+  background: var(--bg);
+  border-color: var(--line-strong);
+  font-weight: 800;
+  margin-bottom: -2px;
+  box-shadow: inset 0 4px 0 var(--accent);
+}
+.vl-tab-key { font-size: 0.7rem; color: var(--muted); font-weight: 400; }
+/* When the right panel is narrow, drop the Alt+n hints (they are listed in the ? help) so all five tabs fit. */
+.vl-ws-right { container-type: inline-size; }
+@container (max-width: 620px) {
+  .vl-tab-key { display: none; }
+  .vl-tab { padding: 8px 11px; }
+}
+.vl-tabpanels { flex: 1 1 auto; min-height: 0; position: relative; }
+.vl-tabpanel { position: absolute; inset: 0; overflow: auto; padding: 12px; }
+.vl-tabpanel--paper { padding: 12px 12px 40px; }
+/* the graph tools stick to the very top of the tab panel (over its 12 px padding, so nothing shows above them) */
+.vl-tabpanel > .vg-root:not(.vg-root--readonly) > .vg-toolbar { top: -12px; }
+
+/* =================================================================== apparatus panel */
+
+.vl-ws-left > .vl-apparatus { flex: 1 1 auto; }
+.vl-apparatus { display: flex; flex-direction: column; min-height: 100%; }
+.vl-app-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.vl-app-zoom { display: inline-flex; align-items: center; gap: 4px; }
+.vl-app-zoomlevel { min-width: 3.4em; text-align: center; font-family: var(--font-mono); font-weight: 700; }
+.vl-app-targets { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.vl-app-targets-label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+
+/* The stage takes most of the viewport height; the stopwatch and reading pad sit directly below it (still in view),
+   the experiment controls follow and the left column scrolls for them. */
+.vl-app-stagerow { flex: 1 1 auto; min-height: 300px; min-height: max(300px, calc(100vh - 360px)); min-height: max(300px, calc(100dvh - 360px)); display: flex; }
+.vl-app-stage { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; background: var(--bench); }
+.vl-app-canvas {
+  position: absolute;
+  left: 0; top: 0;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.vl-app-canvas--panning { cursor: grabbing; }
+.vl-app-canvas--grab-item { cursor: pointer; }
+.vl-app-canvas:focus-visible { outline-offset: -4px; box-shadow: none; }
+.vl-app-stagemsg {
+  position: absolute; left: 12px; right: 12px; bottom: 12px;
+  padding: 10px 14px;
+  background: var(--bad-soft); color: var(--ink);
+  border: 2px solid var(--bad); border-radius: var(--radius);
+  font-weight: 600;
+}
+.vl-app-hint {
+  position: absolute; left: 12px; top: 12px; right: 12px;
+  max-width: 30em;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  padding: 10px 12px;
+  background: var(--panel); color: var(--ink);
+  border: 2px solid var(--accent); border-radius: var(--radius);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+.vl-app-hint p { margin: 0; flex: 1 1 14em; }
+
+/* eye-level control */
+.vl-eye {
+  flex: none;
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  text-align: center;
+}
+.vl-eye-label { font-size: 0.78rem; font-weight: 800; line-height: 1.1; }
+.vl-eye-end { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+.vl-eye-slider {
+  position: relative;
+  flex: 1 1 auto;
+  width: 56px;
+  min-height: 140px;
+  border-radius: 28px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+.vl-eye-track { position: absolute; left: 0; right: 0; top: 16px; bottom: 16px; }
+.vl-eye-rail {
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 8px; transform: translateX(-50%);
+  background: var(--line);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+}
+.vl-eye-thumb {
+  position: absolute; left: 50%;
+  width: 46px; height: 30px;
+  transform: translate(-50%, -50%);
+  display: grid; place-items: center;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.vl-eye-icon {
+  position: relative;
+  display: block;
+  width: 26px; height: 14px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+}
+.vl-eye-icon::after {
+  content: "";
+  position: absolute; left: 50%; top: 50%;
+  width: 7px; height: 7px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--ink);
+}
+.vl-eye-slider:focus-visible .vl-eye-thumb { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* "level" tick at the middle of the track: the middle of the slider is level with the centre of the view */
+.vl-eye-level {
+  position: absolute; left: 50%; top: 50%;
+  width: 30px; height: 0;
+  transform: translate(-50%, -50%);
+  border-top: 3px solid var(--ink);
+}
+.vl-eye-level::before, .vl-eye-level::after {
+  content: ""; position: absolute; top: -6px;
+  width: 0; height: 0;
+  border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+}
+.vl-eye-level::before { left: -7px; border-left: 6px solid var(--ink); }
+.vl-eye-level::after { right: -7px; border-right: 6px solid var(--ink); }
+/* eye far above / below the view: the thumb is pinned at that end */
+.vl-eye-slider--pinned .vl-eye-thumb { border-style: dashed; }
+.vl-eye-note {
+  margin: 2px 0 0;
+  font-size: 0.72rem; line-height: 1.2; font-weight: 700;
+  color: var(--warn);
+  overflow-wrap: anywhere;
+}
+
+/* lower area: bench tools, experiment controls, reading pad */
+.vl-app-lower {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  background: var(--panel);
+  border-top: 2px solid var(--line);
+}
+.vl-bench { flex: 0 0 auto; max-width: 100%; }
+.vl-bench .vi-sw { flex-direction: row; align-items: center; flex-wrap: wrap; padding: 8px; border-radius: 16px; }
+.vl-bench .vi-sw-digits { font-size: 2rem; }
+.vl-bench .vi-sw-lcd { min-width: 8.5ch; }
+.vl-bench .vi-sw-btn { min-height: 48px; min-width: 84px; font-size: 1.02rem; border-radius: 12px; }
+.vl-app-controls { order: 2; flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: flex-start; min-width: 0; }
+.vl-ctl-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.vl-ctl-group-label { flex-basis: 100%; font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+.vl-ctl-btn { padding: 6px 12px; }
+.vl-ctl-tick { display: inline-block; width: 1em; }
+.vl-ctl-note { flex-basis: 100%; margin: 0; font-size: 0.88rem; color: var(--muted); }
+
+.vl-pad { order: 1; flex: 1 1 300px; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.vl-pad-row { display: flex; align-items: center; gap: 8px; }
+.vl-pad-label { font-weight: 800; }
+.vl-pad-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 2px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+}
+.vl-pad-input:focus { border-color: var(--accent); outline: 3px solid var(--focus); outline-offset: 1px; }
+.vl-pad-input:disabled { background: var(--bg); color: var(--muted); }
+.vl-pad-record { min-height: 48px; padding: 8px 22px; font-size: 1.05rem; }
+.vl-pad-target { margin: 0; font-size: 0.92rem; }
+.vl-pad-target--none { color: var(--warn); }
+.vl-pad-target-label { font-family: var(--font-mono); padding: 1px 6px; border: 1px solid var(--accent); border-radius: 4px; background: var(--accent-soft); }
+.vl-rough { font-size: 0.92rem; }
+.vl-rough summary { min-height: 36px; display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: 700; }
+.vl-rough-note { font-weight: 400; color: var(--muted); }
+.vl-rough-help { color: var(--muted); margin: 0 0 4px; }
+.vl-rough-list { margin: 0 0 6px; padding-left: 1.8em; font-family: var(--font-mono); columns: 3 7em; }
+@media (pointer: coarse) { .vl-rough summary { min-height: var(--tap); } }
+/* "“…” is already in (b) L =. Replace it?" */
+.vl-pad-confirm {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+  padding: 6px 8px;
+  border: 2px solid var(--warn); border-radius: 6px;
+  background: var(--warn-soft); color: var(--ink);
+}
+.vl-pad-confirm[hidden] { display: none; }
+.vl-pad-confirm-text { flex: 1 1 14em; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+/* reload button in the stage message after the apparatus stopped */
+.vl-app-reload { margin-left: 8px; }
+
+/* Wide layout: the left column does not scroll. The stage takes what is left after the toolbar and a compact lower
+   area (stopwatch and reading pad side by side, then a wrapping strip of experiment controls), which scrolls
+   inside itself, so the apparatus and its controls are on screen together on a laptop. */
+@media (min-width: 900px) {
+  .vl-ws-left { overflow: hidden; }
+  .vl-ws-left > .vl-apparatus { flex: 1 1 auto; min-height: 0; }
+  .vl-apparatus { min-height: 0; height: 100%; }
+  .vl-app-toolbar { flex: none; padding: 4px 8px; gap: 4px 10px; }
+  .vl-app-stagerow { flex: 1 1 auto; min-height: 240px; }
+  .vl-eye { overflow: hidden; padding: 6px 3px; }
+  .vl-eye-slider { min-height: 84px; }
+  .vl-app-lower {
+    flex: 0 1 auto;
+    max-height: 40%;
+    overflow: auto;
+    overscroll-behavior: contain;
+    gap: 6px 10px;
+    padding: 6px 8px 8px;
+  }
+  .vl-bench .vi-sw { padding: 4px 6px; gap: 6px; border-radius: 12px; }
+  .vl-bench .vi-sw-digits { font-size: 1.55rem; }
+  .vl-pad { flex-basis: 260px; gap: 2px; }
+  .vl-pad-target { font-size: 0.85rem; line-height: 1.3; }
+  .vl-rough summary { min-height: 28px; }
+  .vl-app-controls { gap: 4px 12px; }
+  .vl-ctl-group { gap: 4px; }
+  .vl-ctl-group-label { font-size: 0.78rem; }
+  .vl-ctl-note { font-size: 0.8rem; }
+}
+@media (min-width: 900px) and (pointer: fine) {
+  .vl-app-toolbar .vl-btn { min-height: 36px; min-width: 36px; }
+  .vl-app-toolbar .vl-btn--chip { padding: 2px 10px; font-size: 0.88rem; }
+  .vl-bench .vi-sw-btn { min-height: 38px; min-width: 70px; font-size: 0.98rem; }
+  .vl-pad-input { min-height: 38px; padding: 4px 10px; font-size: 1.1rem; }
+  .vl-pad-record { min-height: 38px; padding: 4px 18px; }
+  .vl-ctl-btn { min-height: 36px; min-width: 36px; padding: 4px 10px; font-size: 0.92rem; }
+}
+
+/* =================================================================== question paper */
+
+.vl-paper {
+  max-width: 50em;
+  margin: 0 auto;
+  padding: 26px 26px 30px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  font-family: var(--font-paper);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.vl-paper-banner {
+  font-family: var(--font-ui);
+  padding: 8px 12px;
+  border: 2px solid var(--line-strong);
+  background: var(--bg);
+  border-radius: 6px;
+}
+.vl-paper-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; border-bottom: 2px solid var(--ink); margin-bottom: 14px; }
+.vl-paper-title { font-size: 1.4rem; margin: 0 0 6px; }
+.vl-paper-total-top { margin: 0 0 6px; font-weight: 700; }
+.vl-paper-intro { margin-bottom: 12px; }
+.vl-paper-apparatus { margin: 0 0 16px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 4px; }
+.vl-paper-apparatus-head { font-weight: 700; margin-bottom: 4px; }
+.vl-paper-apparatus ul { margin: 0 0 8px; padding-left: 1.4em; }
+.vl-paper-note { font-weight: 700; margin: 0; }
+.vl-paper-hintnote { font-family: var(--font-ui); font-size: 0.9rem; color: var(--muted); }
+.vl-paper-parts { display: grid; gap: 18px; }
+.vl-paper-total { text-align: right; font-weight: 800; margin: 20px 0 0; }
+
+.vl-part-row {
+  display: grid;
+  grid-template-columns: 3.4em minmax(0, 1fr) 3em;
+  gap: 0 8px;
+}
+.vl-part--d1 .vl-part-row, .vl-part--d2 .vl-part-row { grid-template-columns: 2.6em minmax(0, 1fr) 3em; }
+.vl-part--d1, .vl-part--d2 { margin-top: 14px; }
+.vl-part-body > .vl-part { margin-right: -3.6em; }   /* nested subparts reuse the outer marks margin */
+.vl-part-label { font-weight: 800; }
+.vl-part-stem > :last-child { margin-bottom: 0.4em; }
+.vl-part-marks { align-self: end; text-align: right; font-weight: 800; white-space: nowrap; }
+
+.vl-ans { margin: 8px 0; }
+.vl-ans--value { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.vl-ans-prefix { font-style: italic; white-space: nowrap; }
+.vl-ans-suffix { white-space: nowrap; }
+.vl-ans-line {
+  flex: 1 1 10em;
+  min-width: 8em;
+  max-width: 24em;
+  min-height: var(--tap);
+  padding: 6px 4px 2px;
+  border: 0;
+  border-bottom: 2px dotted var(--line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-paper);
+  font-size: 1.1rem;
+}
+.vl-ans-line:focus { border-bottom: 2px solid var(--accent); background: var(--accent-soft); outline: 3px solid var(--focus); outline-offset: 2px; }
+.vl-ans-caption { display: block; font-style: italic; margin-bottom: 2px; }
+.vl-ans-text {
+  display: block;
+  width: 100%;
+  min-height: calc(3 * 1.9em + 8px);
+  padding: 2px 6px 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  color: var(--ink);
+  font-family: var(--font-paper);
+  font-size: 1.05rem;
+  line-height: 1.9em;
+  resize: vertical;
+  background-color: transparent;
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.9em - 2px), var(--line) calc(1.9em - 2px), var(--line) 1.9em);
+  background-position: 0 2px;
+  background-attachment: local;
+}
+.vl-ans-text--item { min-height: calc(2 * 1.9em + 8px); }
+.vl-ans-text:focus { border-color: var(--accent); outline: 3px solid var(--focus); outline-offset: 1px; }
+.vl-ans-line[readonly], .vl-ans-text[readonly] { color: var(--ink); cursor: default; background-color: transparent; }
+.vl-ans--flash { animation: vl-flash 1.2s ease-out; }
+@keyframes vl-flash { 0% { background-color: var(--accent-soft); } 100% { background-color: transparent; } }
+.vl-ans-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.vl-ans-item { display: grid; grid-template-columns: 1.8em minmax(0, 1fr); align-items: start; }
+.vl-ans-num { font-weight: 700; padding-top: 0.25em; }
+.vl-ans--link {
+  font-family: var(--font-ui);
+  padding: 10px 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 6px;
+  background: var(--panel);
+}
+.vl-ans-linktext { margin-bottom: 6px; }
+.vl-ans-status { margin: 6px 0 0; font-size: 0.9rem; color: var(--muted); }
+.vl-ans-tools { font-family: var(--font-ui); font-size: 0.92rem; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.vl-hint { font-family: var(--font-ui); margin: 8px 0; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent-soft); }
+.vl-hint summary { min-height: 40px; display: flex; align-items: center; padding: 0 10px; cursor: pointer; font-weight: 700; color: var(--ink); }
+.vl-hint-body { padding: 0 12px 8px; }
+@media (pointer: coarse) { .vl-hint summary { min-height: var(--tap); } }
+
+/* =================================================================== report */
+
+.vl-report { display: grid; gap: 16px; max-width: 60em; margin: 0 auto; }
+.vl-report-card, .vl-report-section {
+  padding: 16px 18px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.vl-report-exam { max-width: 60em; margin: 0 auto 16px; border-top: 6px solid var(--ink); }
+.vl-report-title { font-size: 1.3rem; }
+.vl-report-meta { color: var(--muted); font-size: 0.92rem; }
+.vl-report-total { margin: 4px 0 12px; }
+.vl-report-total-num { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.vl-report-total-pct { font-size: 1.2rem; font-weight: 700; }
+.vl-report-total-label { color: var(--muted); }
+.vl-report-advice { margin-top: 12px; }
+
+.vl-skillbars { display: grid; gap: 10px; }
+.vl-skillbar-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; }
+.vl-skillbar-name abbr { font-weight: 800; }
+.vl-skillbar-long { color: var(--muted); font-size: 0.92rem; }
+.vl-skillbar-val { font-weight: 800; font-variant-numeric: tabular-nums; }
+.vl-skillbar-pct { font-weight: 400; color: var(--muted); }
+.vl-skillbar-track { height: 14px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 7px; overflow: hidden; }
+.vl-skillbar-fill { display: block; height: 100%; }
+.vl-skillbar-fill--mmo { background: var(--skill-mmo); }
+.vl-skillbar-fill--pdo { background: var(--skill-pdo); }
+.vl-skillbar-fill--ace { background: var(--skill-ace); }
+
+.vl-report-export { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.vl-report-export-label { font-weight: 700; }
+.vl-export-status { flex-basis: 100%; margin: 0; font-size: 0.92rem; color: var(--muted); }
+.vl-export-status:empty { display: none; }
+
+/* A long unbroken token typed by the student (quoted in a comment) wraps instead of widening the report. */
+.vl-report { grid-template-columns: minmax(0, 1fr); }
+.vl-report > *, .vl-report-card, .vl-report-section, .vl-report-part, .vl-mp-list, .vl-mp, .vl-mp-head, .vl-mp-label,
+.vl-written, .vl-model, .vl-model-answers dd { min-width: 0; }
+.vl-mp-comment, .vl-mp-label, .vl-written, .vl-written-list li, .vl-report-table th, .vl-report-table td,
+.vl-model-answers dt, .vl-model-answers dd, .vl-model-answers li, .vl-model-notes li, .vl-report-mistakes li,
+.vl-report-title, .vl-report-meta {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.vl-report-table { width: 100%; border-collapse: collapse; }
+.vl-report-table th, .vl-report-table td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.vl-report-table thead th { border-bottom: 2px solid var(--ink); font-size: 0.9rem; }
+
+.vl-report-part { margin-top: 14px; border-radius: 4px; }
+.vl-report-parthead { padding-bottom: 4px; border-bottom: 2px solid var(--line); }
+.vl-report-partmarks { font-weight: 400; color: var(--muted); }
+.vl-mp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.vl-mp {
+  padding: 10px 12px 10px 14px;
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--panel);
+}
+.vl-mp--ok { border-left-color: var(--ok); }
+.vl-mp--bad { border-left-color: var(--bad); }
+.vl-mp--part { border-left-color: var(--warn); }
+.vl-mp-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.vl-mp-icon {
+  display: inline-grid; place-items: center;
+  width: 28px; height: 28px; flex: none;
+  border-radius: 50%;
+  font-weight: 900;
+  border: 2px solid currentColor;
+}
+.vl-mp--ok .vl-mp-icon { color: var(--ok); background: var(--ok-soft); }
+.vl-mp--bad .vl-mp-icon { color: var(--bad); background: var(--bad-soft); }
+.vl-mp--part .vl-mp-icon { color: var(--warn); background: var(--warn-soft); font-size: 1.15rem; line-height: 1; }
+.vl-mp-label { font-weight: 700; flex: 1 1 14em; }
+.vl-mp-skill {
+  font-size: 0.75rem; font-weight: 800;
+  padding: 1px 8px;
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+}
+.vl-mp-skill--mmo { border-color: var(--skill-mmo); }
+.vl-mp-skill--pdo { border-color: var(--skill-pdo); }
+.vl-mp-skill--ace { border-color: var(--skill-ace); }
+.vl-mp-marks { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vl-mp-comment { margin: 6px 0 0; }
+.vl-mp-subhead { margin: 10px 0 4px; font-size: 0.95rem; }
+.vl-written { margin-top: 8px; padding: 8px 10px; background: var(--bg); border-radius: 6px; font-size: 0.95rem; }
+.vl-written-head { font-weight: 700; margin: 4px 0 2px; }
+.vl-written-list { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 3px; }
+.vl-written-list li { display: block; padding-left: 1.6em; text-indent: -1.6em; }
+.vl-icon { display: inline-block; width: 1.6em; text-indent: 0; font-weight: 900; }
+.vl-icon--ok { color: var(--ok); }
+.vl-icon--bad { color: var(--bad); }
+.vl-written-yours, .vl-written-reason { color: var(--muted); }
+.vl-report-mistakes { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+
+.vl-model h4 { margin-top: 14px; }
+.vl-model-table, .vl-model-graph { overflow-x: auto; }
+.vl-model-answers { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; margin: 0; }
+.vl-model-answers dt { font-weight: 700; font-family: var(--font-paper); }
+.vl-model-answers dd { margin: 0; font-family: var(--font-paper); }
+.vl-model-answers ol { margin: 0; padding-left: 1.3em; }
+.vl-model-notes { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+
+/* =================================================================== calculator */
+
+.vl-calc {
+  max-width: 420px;
+  padding: 12px;
+  background: var(--panel);
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+}
+.vl-calc-head { display: flex; align-items: baseline; justify-content: space-between; }
+.vl-calc-title { margin: 0 0 8px; font-size: 1.05rem; }
+.vl-calc-mode { font-family: var(--font-mono); font-size: 0.8rem; font-weight: 800; padding: 1px 6px; border: 1px solid var(--line-strong); border-radius: 4px; }
+.vl-calc-screen {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+}
+.vl-calc-input {
+  width: 100%;
+  min-height: var(--tap);
+  border: 0;
+  border-bottom: 1px dashed var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  padding: 4px 2px;
+}
+.vl-calc-input:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+.vl-calc-result { display: block; min-height: 1.6em; text-align: right; font-family: var(--font-mono); font-size: 1.45rem; font-weight: 800; overflow-wrap: anywhere; }
+.vl-calc-result--error { color: var(--bad); font-size: 1rem; font-weight: 700; text-align: left; }
+.vl-calc-keys { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.vl-calc-key {
+  min-height: var(--tap);
+  padding: 4px 2px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.vl-calc-key:hover { border-color: var(--accent); background: var(--accent-soft); }
+.vl-calc-key:active { transform: translateY(1px); }
+.vl-calc-key--op { background: var(--accent-soft); }
+.vl-calc-key--fn { background: var(--warn-soft); }
+.vl-calc-key--eq { grid-column: span 3; background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-size: 1.15rem; }
+.vl-calc-history { margin-top: 10px; }
+.vl-calc-history summary { min-height: 36px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
+.vl-calc-history-empty { color: var(--muted); font-size: 0.9rem; }
+.vl-calc-history-list { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 4px; max-height: 14em; overflow: auto; }
+.vl-calc-hist-btn {
+  width: 100%;
+  min-height: 36px;
+  display: flex; justify-content: space-between; gap: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+}
+.vl-calc-hist-val { font-weight: 700; }
+.vl-calc-help { font-size: 0.82rem; color: var(--muted); margin: 8px 0 0; }
+@media (pointer: coarse) { .vl-calc-history summary, .vl-calc-hist-btn { min-height: var(--tap); } }
+
+/* =================================================================== tools tab */
+
+.vl-tools { display: grid; gap: 14px; max-width: 46em; margin: 0 auto; }
+.vl-tools-note { margin: 0; padding: 8px 12px; border-left: 4px solid var(--accent); background: var(--panel); }
+.vl-tools-section { padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.vl-tools-title { font-size: 1.1rem; }
+.vl-tools-ta { font-family: var(--font-mono); resize: vertical; }
+.vl-tools-warn { color: var(--warn); font-weight: 600; margin: 6px 0; }
+.vl-tools-warn:empty { display: none; }
+.vl-tools-out { margin: 8px 0 0; display: grid; gap: 4px; }
+.vl-tools-outrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 4px 0; border-bottom: 1px dotted var(--line); }
+.vl-tools-outrow dt { color: var(--muted); }
+.vl-tools-outrow dd { margin: 0; font-family: var(--font-mono); font-weight: 700; text-align: right; white-space: pre-wrap; }
+.vl-tools-scroll { overflow-x: auto; margin-bottom: 8px; }
+.vl-tools-table { border-collapse: collapse; min-width: 100%; }
+.vl-tools-table th { text-align: left; font-size: 0.85rem; padding: 4px; }
+.vl-tools-table td { padding: 3px; }
+.vl-tools-pct { font-family: var(--font-mono); }
+.vl-tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 10px; }
+.vl-tools-ext summary { min-height: var(--tap); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; }
+.vl-tools .vl-calc { max-width: none; }
+
+/* =================================================================== toasts */
+
+.vl-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  width: min(92vw, 30em);
+  pointer-events: none;
+}
+.vl-toast {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--panel);
+  border: 2px solid var(--ink);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  pointer-events: auto;
+  transition: opacity 0.6s, transform 0.6s;
+}
+.vl-toast--ok { background: var(--ok-soft); color: var(--ink); border-color: var(--ok); }
+.vl-toast--warn { background: var(--warn-soft); color: var(--ink); border-color: var(--warn); }
+.vl-toast--bad { background: var(--bad-soft); color: var(--ink); border-color: var(--bad); }
+.vl-toast--out { opacity: 0; transform: translateY(8px); }
+
+/* =================================================================== dialogs */
+
+.vl-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(8, 12, 18, 0.55);
+}
+.vl-modal {
+  width: min(100%, 34rem);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 20px 22px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+.vl-modal-title { font-size: 1.3rem; }
+.vl-modal-body { margin-bottom: 14px; }
+.vl-modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.vl-shortcuts { width: 100%; border-collapse: collapse; }
+.vl-shortcuts th, .vl-shortcuts td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.vl-kbd {
+  display: inline-block;
+  min-width: 1.8em;
+  padding: 1px 6px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  background: var(--bg);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* =================================================================== saved sessions */
+
+.vl-session-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.vl-session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.vl-session-main { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
+.vl-session-title { font-weight: 800; font-size: 1.05rem; }
+.vl-session-meta { color: var(--muted); font-size: 0.9rem; }
+.vl-session-status { font-size: 0.92rem; font-weight: 600; }
+.vl-session-status--done { color: var(--ok); }
+.vl-session-actions { display: flex; gap: 8px; }
+
+/* =================================================================== narrow screens */
+
+@media (max-width: 899px) {
+  .vl-narrow-toggle { display: inline-flex; }
+  .vl-ws-main { grid-template-columns: minmax(0, 1fr); }
+  .vl-ws[data-show="panel"] .vl-ws-left { display: none; }
+  .vl-ws[data-show="apparatus"] .vl-ws-right { display: none; }
+  .vl-ws-left { border-right: 0; }
+  .vl-app-stagerow { min-height: 46vh; }
+  .vl-brand-sub { display: none; }
+  .vl-header { padding: 6px 10px; gap: 6px 10px; }
+  body.vl-body--ws .vl-brand-text { display: none; }
+  .vl-seed-label { display: none; }
+  .vl-timer-label { display: none; }
+  .vl-tab-key { display: none; }
+  .vl-paper { padding: 16px 14px 20px; }
+  .vl-part-row { grid-template-columns: 2.6em minmax(0, 1fr) 2.6em; }
+  .vl-part-body > .vl-part { margin-right: -3.1em; }
+  .vl-field--inline { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .vl-hero { padding: 18px 16px; }
+  .vl-hero-title { font-size: 1.7rem; }
+  .vl-eye { width: 60px; }
+  .vl-eye-slider { width: 48px; }
+  .vl-pad-row { flex-wrap: wrap; }
+  .vl-pad-input { flex-basis: 60%; }
+  .vl-model-answers { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Compact workspace header on phones (portrait or landscape) and other small windows: ONE row with the timer, the
+   Apparatus / Paper toggle and the Menu; the title, seed, question switch, save status and the session actions
+   (Submit / Finish exam) move into the Menu, so the header takes at most a quarter of the screen. */
+@media (max-width: 560px), (max-height: 560px) {
+  body.vl-body--ws .vl-header { flex-wrap: wrap; align-items: center; padding: 4px 8px; gap: 4px 8px; }
+  body.vl-body--ws .vl-brand, body.vl-body--ws .vl-header-ctx { display: none; }
+  /* the bar's remaining items (timer, Apparatus / Paper) join the Menu button in one wrapping row */
+  body.vl-body--ws .vl-header-bar { display: contents; }
+  body.vl-body--ws .vl-header-menu { margin-left: 0; }
+  body.vl-body--ws .vl-menu { left: 0; right: auto; max-width: calc(100vw - 16px); }
+  body.vl-body--ws .vl-header-bar > .vl-qswitch,
+  body.vl-body--ws .vl-header-bar > .vl-seed,
+  body.vl-body--ws .vl-header-bar > .vl-save,
+  body.vl-body--ws .vl-header-bar > .vl-ws-spacer,
+  body.vl-body--ws .vl-header-bar > .vl-ws-actions { display: none; }
+  body.vl-body--ws .vl-menu-ws { display: block; }
+  body.vl-body--ws .vl-timer { padding: 0 2px 0 8px; gap: 4px; }
+  body.vl-body--ws .vl-timer-label { display: none; }
+  body.vl-body--ws .vl-narrow-toggle .vl-btn { padding: 6px 10px; }
+  body.vl-body--ws .vl-menu-btn { padding: 6px 10px; }
+  body.vl-body--ws .vl-menu-text {        /* icon only; the name stays for screen readers */
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  /* the apparatus toolbar stays one row: the zoom targets scroll sideways. flex: none — as a scroll container in
+     the column flexbox its automatic minimum height would be 0, and it was squashed under the stage */
+  .vl-app-toolbar { flex: none; flex-wrap: nowrap; overflow-x: auto; padding: 4px 6px; gap: 6px; }
+  .vl-app-zoom, .vl-app-targets { flex: none; flex-wrap: nowrap; }
+  .vl-app-targets-label { display: none; }
+  .vl-app-stagerow { min-height: 62vh; }
+}
+
+@media (min-width: 1500px) {
+  .vl-paper { font-size: 1.1rem; }
+}
+
+/* =================================================================== motion, contrast, print */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .vl-btn[aria-pressed="true"], .vl-tab[aria-selected="true"] { border: 3px solid CanvasText; }
+  .vl-skillbar-fill { background: Highlight; }
+  .vl-mp { border-left-width: 6px; }
+}
+
+@media print {
+  body, body.vl-body--ws { height: auto; overflow: visible; display: block; background: #fff; }
+  .vl-header, .vl-ws-left, .vl-tabs, .vl-toasts, .vl-report-export, .vl-skip { display: none !important; }
+  .vl-ws-main { display: block; }
+  .vl-tabpanels, .vl-tabpanel { position: static; overflow: visible; }
+  .vl-paper { box-shadow: none; border: 0; max-width: none; }
+}

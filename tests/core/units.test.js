@@ -1,0 +1,98 @@
+test('units: parseUnit dimensions and factors', function () {
+  var U = VLab.units;
+  var g = U.parseUnit('m s^-2');
+  assert.ok(g.ok); assert.deepEqual(g.dims, { m: 1, s: -2 });
+  assert.deepEqual(U.parseUnit('m/s²').dims, { m: 1, s: -2 });
+  assert.deepEqual(U.parseUnit('m s-2').dims, { m: 1, s: -2 });
+  assert.deepEqual(U.parseUnit('s² m⁻¹').dims, { s: 2, m: -1 });
+  assert.close(U.parseUnit('cm').factor, 0.01, 1e-15);
+  assert.close(U.parseUnit('mm').factor, 0.001, 1e-15);
+  assert.close(U.parseUnit('kg').factor, 1, 1e-12);
+  assert.close(U.parseUnit('g').factor, 0.001, 1e-15);
+  assert.close(U.parseUnit('cm³').factor, 1e-6, 1e-18);
+  assert.close(U.parseUnit('ms').factor, 0.001, 1e-15);
+  assert.close(U.parseUnit('min').factor, 60, 1e-12);
+  assert.close(U.parseUnit('kΩ').factor, 1000, 1e-9);
+  assert.ok(U.dimsEqual(U.parseUnit('ohm').dims, U.parseUnit('V A^-1').dims));
+  assert.ok(U.dimsEqual(U.parseUnit('N').dims, U.parseUnit('kg m s^-2').dims));
+  assert.ok(U.parseUnit('°').angle);
+  assert.deepEqual(U.parseUnit('°C').dims, { K: 1 });
+  assert.deepEqual(U.parseUnit('%').dims, {});
+  assert.ok(!U.parseUnit('banana').ok);
+  assert.ok(!U.parseUnit('').ok);
+});
+test('units: Cambridge headings', function () {
+  var H = VLab.units.parseHeading;
+  var h = H('L / cm');
+  assert.ok(h.ok); assert.equal(h.style, 'slash'); assert.equal(h.quantity, 'L'); assert.equal(h.unitStr, 'cm');
+  h = H('T² / s²');
+  assert.equal(h.symbol, 'T^2'); assert.deepEqual(h.unit.dims, { s: 2 });
+  h = H('T (s)'); assert.ok(h.ok); assert.equal(h.style, 'brackets'); assert.equal(h.quantity, 'T');
+  h = H('1/u / m⁻¹'); assert.equal(h.quantity, '1/u'); assert.deepEqual(h.unit.dims, { m: -1 });
+  h = H('1/u/m^-1'); assert.equal(h.quantity, '1/u'); assert.equal(h.unitStr, 'm^-1');
+  h = H('v / m/s'); assert.equal(h.quantity, 'v'); assert.deepEqual(h.unit.dims, { m: 1, s: -1 });
+  h = H('T/s'); assert.equal(h.quantity, 'T'); assert.equal(h.unitStr, 's');
+  h = H('t₁ / s'); assert.equal(h.symbol, 't_1');
+  h = H('sin i'); assert.ok(h.ok); assert.equal(h.style, 'none'); assert.equal(h.quantity, 'sin i');
+  h = H('mean t / s'); assert.equal(h.quantity, 'mean t');
+  h = H('T in s'); assert.ok(!h.ok); assert.ok(h.problems.length > 0);
+  h = H('T, s'); assert.ok(!h.ok);
+  h = H('L cm'); assert.ok(!h.ok);
+  h = H('T'); assert.ok(h.ok); assert.equal(h.style, 'none'); assert.ok(h.problems.indexOf('no unit given') !== -1);
+  assert.ok(!H('').ok);
+});
+test('units: log headings', function () {
+  var H = VLab.units.parseHeading;
+  var h = H('lg (T / s)');
+  assert.ok(h.ok); assert.equal(h.log, 'lg'); assert.equal(h.inner.quantity, 'T'); assert.equal(h.inner.unitStr, 's');
+  h = H('lg(L/cm)'); assert.equal(h.log, 'lg'); assert.equal(h.inner.unitStr, 'cm');
+  h = H('ln (θ / °C)'); assert.equal(h.log, 'ln');
+  h = H('lg T'); assert.ok(h.problems.some(function (p) { return /missing/.test(p); }));
+  h = H('length / cm'); assert.equal(h.log, null, 'length is not a log');
+});
+test('units: values with units', function () {
+  var V = VLab.units.parseValueWithUnit;
+  var v = V('9.79 m s^-2');
+  assert.ok(v.ok); assert.equal(v.valueStr, '9.79'); assert.close(v.si, 9.79, 1e-12);
+  v = V('g = 9.8 m/s²'); assert.ok(v.ok); assert.deepEqual(v.unit.dims, { m: 1, s: -2 });
+  v = V('2.34 cm'); assert.close(v.si, 0.0234, 1e-12); assert.equal(v.num.sf, 3);
+  v = V('4.0 s² m⁻¹'); assert.deepEqual(v.unit.dims, { s: 2, m: -1 });
+  v = V('2.0 × 10^-3 m'); assert.close(v.si, 0.002, 1e-15);
+  v = V('0.52'); assert.ok(v.ok); assert.ok(v.problems.indexOf('no unit') !== -1);
+  assert.ok(!V('about nine').ok);
+  assert.close(VLab.units.convert(50, 'cm', 'm'), 0.5, 1e-12);
+  assert.ok(isNaN(VLab.units.convert(50, 'cm', 's')));
+  assert.equal(VLab.units.formatDims({ kg: 1, m: 1, s: -2 }), 'kg m s⁻²');
+});
+test('units: ± uncertainties (allowPlusMinus, allowUncertainty); without the options nothing changes', function () {
+  var V = VLab.units.parseValueWithUnit;
+  ['±0.01 cm', '± 0.01 cm', '+/- 0.01 cm', '+-0.01 cm', '+ / - 0.01 cm'].forEach(function (s) {
+    var v = V(s, { allowPlusMinus: true });
+    assert.ok(v.ok, s);
+    assert.equal(v.plusMinus, true, s);
+    assert.equal(v.valueStr, '0.01', s);
+    assert.equal(v.unitStr, 'cm', s);
+    assert.close(v.si, 0.0001, 1e-15, s);
+    assert.ok(!V(s).ok, s + ' is not read without allowPlusMinus');
+  });
+  var p = V('±0.41 %', { allowPlusMinus: true });
+  assert.ok(p.ok && p.plusMinus); assert.equal(p.valueStr, '0.41'); assert.equal(p.unitStr, '%');
+  p = V('±0.41', { allowPlusMinus: true });
+  assert.ok(p.ok && p.plusMinus); assert.equal(p.valueStr, '0.41'); assert.equal(p.unitStr, '');
+  assert.equal(V('0.01 cm', { allowPlusMinus: true }).plusMinus, undefined, 'no ± typed');
+  [['2.45 ± 0.01 cm', '0.01'], ['(2.45 ± 0.01) cm', '0.01'], ['2.45 cm ± 0.01 cm', '0.01'], ['2.45 +/- 0.01 cm', '0.01'],
+    ['d = 2.45 ± 0.01 cm', '0.01'], ['24.5 mm ± 0.1 mm', '0.1']].forEach(function (c) {
+    var v = V(c[0], { allowUncertainty: true });
+    assert.ok(v.ok, c[0]);
+    assert.equal(v.num.sf, 3, c[0] + ': s.f. taken from x');
+    assert.close(v.si, 0.0245, 1e-12, c[0]);
+    assert.equal(v.uncertainty.valueStr, c[1], c[0]);
+    assert.close(v.uncertainty.si, parseFloat(c[1]) * (/mm/.test(c[0]) ? 0.001 : 0.01), 1e-15, c[0]);
+  });
+  var plain = V('2.45 cm', { allowUncertainty: true });
+  assert.ok(plain.ok && plain.uncertainty === undefined, 'a plain value has no uncertainty');
+  var noOpt = V('2.45 ± 0.01 cm');
+  assert.ok(!noOpt.ok, 'without allowUncertainty the ± part is an unrecognised unit');
+  assert.ok(noOpt.problems.some(function (q) { return /unit not recognised/.test(q); }));
+  assert.ok(!V('±2.45 cm', { allowUncertainty: true }).ok, 'a leading ± is not a value');
+});

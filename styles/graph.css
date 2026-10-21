@@ -1,0 +1,310 @@
+/* Graph paper (ui/graphView.js). Component prefix .vg- ; colours only from styles/tokens.css.
+   The grid itself is drawn on the canvas from --grid-major / --grid-minor / --paper / --plot-ink. */
+
+.vg-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: var(--font-size);
+  color: var(--ink);
+}
+
+/* ---------- toolbar */
+.vg-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+/* The tools stay at the top of the Graph tab while the paper is scrolled, so a tool can be changed without
+   scrolling back up (not in read-only graphs such as the model answer). */
+.vg-root:not(.vg-root--readonly) > .vg-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: -6px 0 0;
+  padding: 6px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+/* compact tools for a mouse / trackpad, so the sticky toolbar takes little of the panel (touch keeps 44 px) */
+@media (pointer: fine) {
+  .vg-root:not(.vg-root--readonly) > .vg-toolbar { gap: 4px 10px; }
+  .vg-toolbar .vg-group { gap: 4px; }
+  .vg-toolbar .vg-btn { min-height: 34px; min-width: 34px; padding: 0 9px; font-size: 14px; }
+  .vg-toolbar .vg-select { min-height: 34px; }
+}
+.vg-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.vg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.vg-btn:hover:not(:disabled) { background: var(--accent-soft); }
+.vg-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+/* pressed tools: inverted colours AND bold text with an underline bar (never hue alone) */
+.vg-mode--on,
+.vg-btn--on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+  box-shadow: inset 0 -4px 0 var(--accent-ink);
+}
+.vg-mode--on:hover:not(:disabled),
+.vg-btn--on:hover:not(:disabled) { background: var(--accent); }
+.vg-glyph { font-size: 1.15em; line-height: 1; }
+.vg-ext-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.vg-btn--small { font-size: 14px; }
+
+.vg-btn:focus-visible,
+.vg-select:focus-visible,
+.vg-input:focus-visible,
+.vg-radio input:focus-visible,
+.vg-axes > summary:focus-visible,
+.vg-hints > summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.vg-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.vg-inline-label { color: var(--muted); font-size: 14px; }
+.vg-select,
+.vg-input {
+  box-sizing: border-box;
+  min-height: var(--tap);
+  max-width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+}
+.vg-select { padding: 0 8px; }
+.vg-input { width: 100%; padding: 0 10px; }
+.vg-input--num { font-family: var(--font-mono); font-size: 16px; }
+.vg-input[aria-invalid="true"] { border: 2px solid var(--bad); }
+.vg-error { color: var(--bad); font-size: 14px; }
+.vg-error:not(:empty)::before { content: "\2717  "; }
+
+/* ---------- axes & scales */
+.vg-axes,
+.vg-panel,
+.vg-axes-summary {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.vg-axes { padding: 0 12px; }
+.vg-axes > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 600;
+  cursor: pointer;
+}
+.vg-axes-brief { margin-left: 4px; color: var(--muted); font-weight: 400; }
+.vg-axes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  padding-bottom: 12px;
+}
+.vg-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 6px 12px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.vg-fieldset legend { padding: 0 4px; font-weight: 600; }
+.vg-fieldset--inline { display: flex; flex-wrap: wrap; gap: 0 16px; margin-bottom: 8px; }
+.vg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+.vg-field--wide { max-width: 22rem; }
+.vg-label { color: var(--muted); font-size: 14px; }
+.vg-note {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 15px;
+}
+.vg-axes-summary { margin: 0; padding: 8px 12px; font-size: 15px; }
+.vg-axes-summary dt { font-weight: 600; }
+.vg-axes-summary dd { margin: 0 0 6px; }
+
+/* ---------- tool panel */
+.vg-panel { padding: 10px 12px; }
+.vg-help { margin: 0 0 8px; line-height: 1.45; }
+.vg-help:last-child { margin-bottom: 0; }
+.vg-help--small { color: var(--muted); font-size: 14px; }
+.vg-help--strong { font-weight: 600; }
+.vg-help--warn {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.vg-help--ext {
+  padding-left: 10px;
+  border-left: 4px solid var(--skill-pdo);
+}
+.vg-target {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+.vg-target-title { margin: 0 0 4px; font-weight: 600; }
+.vg-target-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin: 0;
+}
+.vg-k { font-family: var(--font-paper); font-style: italic; }
+.vg-v {
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  white-space: pre;
+}
+.vg-unit { color: var(--muted); font-size: 14px; }
+.vg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 8px 0;
+}
+.vg-count { color: var(--muted); font-size: 14px; }
+.vg-readoffs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+.vg-field--ro {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 0;
+}
+.vg-field--ro .vg-label {
+  flex: 0 0 auto;
+  min-width: 2.6em;
+  color: var(--ink);
+  font-family: var(--font-paper);
+  font-size: 17px;
+  font-style: italic;
+}
+.vg-result {
+  margin: 10px 0;
+  font-family: var(--font-paper);
+  font-size: 17px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.vg-frac { font-family: var(--font-mono); font-size: 15px; }
+.vg-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.vg-radio input { width: 20px; height: 20px; margin: 0; }
+
+/* ---------- canvas */
+.vg-canvas-wrap {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  -webkit-overflow-scrolling: touch;
+}
+.vg-canvas {
+  display: block;
+  margin: 0 auto;
+  touch-action: auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.vg-canvas--edit { touch-action: none; }
+.vg-canvas:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+.vg-status { margin: 0; min-height: 1.4em; font-size: 15px; }
+
+/* ---------- hints (practice only) */
+.vg-hints {
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warn);
+  border-radius: var(--radius);
+  background: var(--panel);
+  font-size: 15px;
+}
+.vg-hints > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--warn);
+  font-weight: 600;
+  cursor: pointer;
+}
+.vg-hints-list { margin: 0 0 10px; padding: 0; list-style: none; }
+.vg-hint {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.vg-hint-icon { flex: 0 0 auto; color: var(--warn); }
+
+@media print {
+  .vg-toolbar, .vg-axes-wrap, .vg-panel, .vg-status, .vg-hints-wrap { display: none; }
+  .vg-canvas-wrap { overflow: visible; border: 0; }
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab tests</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 24px; color: #111; background: #fff; }
+    .ok { color: #1d6b31; } .bad { color: #a3221b; } pre { white-space: pre-wrap; font-size: 13px; }
+    li { margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <h1>Virtual Practical Lab — unit tests</h1>
+  <p id="summary">Running…</p>
+  <ul id="results"></ul>
+  <script src="manifest.js"></script>
+  <script>
+    (function () {
+      var m = globalThis.VLabTestManifest;
+      var files = m.sources.map(function (s) { return '../' + s; })
+        .concat(['harness.js'])
+        .concat(m.tests.map(function (t) { return '../' + t; }));
+      var missing = [];
+      function next(i) {
+        if (i >= files.length) return runAll();
+        var s = document.createElement('script');
+        var f = files[i];
+        s.src = f;
+        s.onload = function () { next(i + 1); };
+        s.onerror = function () { missing.push(f); next(i + 1); };
+        if (f.indexOf('/tests/') !== -1 && globalThis.VLabTest) globalThis.VLabTest.currentFile = f;
+        document.body.appendChild(s);
+      }
+      function runAll() {
+        var ul = document.getElementById('results');
+        globalThis.VLabTest.run(function (r) {
+          var li = document.createElement('li');
+          li.className = r.ok ? 'ok' : 'bad';
+          li.textContent = (r.ok ? '✓ ' : '✗ ') + r.file + ' › ' + r.name;
+          if (!r.ok) { var pre = document.createElement('pre'); pre.textContent = r.error; li.appendChild(pre); }
+          ul.appendChild(li);
+        }).then(function (s) {
+          document.getElementById('summary').textContent = s.passed + ' passed, ' + s.failed + ' failed' +
+            (missing.length ? ' — missing: ' + missing.join(', ') : '');
+          document.getElementById('summary').className = s.failed ? 'bad' : 'ok';
+        });
+      }
+      next(0);
+    })();
+  </script>
+</body>
+</html>

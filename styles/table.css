@@ -1,0 +1,296 @@
+/* Results table (ui/tableView.js). Component prefix .vt- ; colours only from styles/tokens.css. */
+
+.vt-root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: var(--font-size);
+  color: var(--ink);
+}
+
+.vt-sr {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- toolbar */
+.vt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.vt-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.vt-btn {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.vt-btn:hover:not(:disabled) { background: var(--accent-soft); }
+.vt-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.vt-btn:focus-visible,
+.vt-hint-go:focus-visible,
+.vt-hints-summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.vt-infobar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  min-height: 1.5em;
+  font-size: 15px;
+}
+.vt-selinfo { margin: 0; color: var(--muted); }
+.vt-status { margin: 0; color: var(--ink); }
+
+/* ---------- the ruled, exam-style table */
+.vt-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 10px 10px 12px 4px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  -webkit-overflow-scrolling: touch;
+}
+.vt-table {
+  border-collapse: collapse;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-paper);
+}
+.vt-table th,
+.vt-table td {
+  position: relative;
+  padding: 0;
+  border: 1px solid var(--ink);
+  vertical-align: middle;
+}
+.vt-table .vt-corner,
+.vt-table .vt-rownum {
+  border: 0;
+  background: var(--paper);
+}
+/* the row numbers stay at the left edge when a wide table is scrolled sideways */
+.vt-table .vt-corner,
+.vt-table .vt-rownum {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  box-shadow: 1px 0 0 var(--line);
+}
+.vt-rownum {
+  padding: 0 8px 0 4px !important;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 400;
+  text-align: right;
+  white-space: nowrap;
+}
+.vt-rowmark {
+  visibility: hidden;
+  margin-right: 4px;
+  color: var(--accent);
+}
+.vt-head { font-weight: 600; }
+
+.vt-input {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 4.75rem;           /* six columns fit the table panel of a 1366 px screen */
+  min-height: var(--tap);
+  padding: 6px 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  text-align: center;
+}
+.vt-input--head { font-weight: 600; }
+.vt-input::placeholder {
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 400;
+  opacity: 1;
+}
+.vt-input:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+  background: var(--accent-soft);
+}
+.vt-cell--selected,
+.vt-head--selected { box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* row being plotted on the graph (marker ▶ as well as the tint) */
+.vt-row--plot > td,
+.vt-row--plot > th.vt-rownum { background: var(--accent-soft); }
+.vt-row--plot .vt-rowmark { visibility: visible; }
+
+/* read-only (model answer): text exactly as typed */
+.vt-text {
+  display: block;
+  min-height: 1.5em;
+  padding: 8px 14px;
+  font-size: 17px;
+  text-align: center;
+  white-space: pre;
+}
+.vt-text--head { font-weight: 600; }
+
+.vt-cell--flash { animation: vt-flash 1.2s ease-out; }
+@keyframes vt-flash {
+  from { background: var(--ok-soft); }
+  to { background: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vt-cell--flash { animation: none; background: var(--ok-soft); }
+}
+
+/* practice-mode hint marks: tint + ⚠ glyph (never colour alone) */
+.vt-cell--warn,
+.vt-head--warn { background: var(--warn-soft); }
+.vt-warnmark {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  color: var(--warn);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.vt-empty { margin: 4px 0 8px; color: var(--muted); font-family: var(--font-ui); }
+
+/* ---------- hints panel */
+.vt-hints {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--warn);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 0 12px;
+  font-size: 15px;
+}
+.vt-hints-summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--warn);
+  font-weight: 600;
+  cursor: pointer;
+}
+.vt-hints-list {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.vt-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.vt-hint-icon { flex: 0 0 auto; }
+.vt-hint--warn .vt-hint-icon { color: var(--warn); }
+.vt-hint--info .vt-hint-icon { color: var(--muted); }
+.vt-hint-text { flex: 1 1 16rem; }
+.vt-hint-go {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+@media (pointer: coarse) {
+  .vt-hint-go { min-height: var(--tap); }
+}
+
+/* ---------- context / column / row menu */
+.vt-menu {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  min-width: 230px;
+  max-width: calc(100vw - 16px);
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  font-family: var(--font-ui);
+}
+.vt-menu:focus { outline: 3px solid var(--focus); }
+.vt-menu-heading {
+  padding: 6px 12px 2px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.vt-menu-item {
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.vt-menu-item:hover:not(:disabled) { background: var(--accent-soft); }
+.vt-menu-item:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+  background: var(--accent-soft);
+}
+.vt-menu-item:disabled { color: var(--muted); opacity: 0.7; cursor: not-allowed; }
+.vt-menu-item--danger:not(:disabled) { color: var(--bad); }
+.vt-menu-sep { height: 1px; margin: 6px 4px; background: var(--line); }
+
+@media print {
+  .vt-toolbar, .vt-infobar, .vt-hints-wrap { display: none; }
+  .vt-scroll { overflow: visible; border: 0; }
+}
+
+/* finer pointers: slightly tighter cells (touch keeps the larger targets) */
+@media (pointer: fine) {
+  .vt-input { min-height: 38px; padding: 4px 3px; font-size: 16px; }
+  .vt-rownum { padding: 0 6px 0 2px !important; }
+}

@@ -1,0 +1,41 @@
+/* Circuit lab (.vc- prefix): component box, selected-component panel, set-up chooser, diagram. */
+.vc-title { font-weight: 700; }
+.vc-topbar { display: flex; gap: var(--gap); align-items: center; padding: 6px 12px; }
+
+.vc-box-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 8px; }
+.vc-box-group { flex: 0 0 100%; font-size: 0.85rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.vc-add { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 4px 10px; text-align: left; }
+.vc-add .vc-icon { flex: none; background: #fff; border-radius: 4px; }
+
+.vc-selected { margin: 10px 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.vc-sel-title { margin: 0 0 4px; font-size: 1.05rem; }
+.vc-desc { margin: 0 0 8px; color: var(--muted); }
+.vc-field { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; }
+.vc-field select { min-height: 40px; font: inherit; padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--panel); color: var(--ink); }
+.vc-num { min-width: 9ch; text-align: center; font-family: var(--font-mono); }
+.vc-nudges { display: flex; flex-wrap: wrap; gap: 4px; }
+.vc-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.vc-warnings:empty { display: none; }
+.vc-warn-list { margin: 8px 0; padding: 8px 12px 8px 28px; background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); border-radius: var(--radius); }
+
+.vc-chooser { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.vc-template-select { min-height: var(--tap); max-width: 100%; font: inherit; padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--panel); color: var(--ink); }
+.vc-template { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; font-family: var(--font-paper); }
+.vc-h2 { margin: 0 0 8px; font-size: 1.2rem; }
+.vc-h3 { margin: 14px 0 6px; font-size: 1.02rem; }
+.vc-aim { margin: 0 0 8px; }
+.vc-figure { margin: 8px 0; text-align: center; }
+.vc-figure figcaption { font-size: 0.9rem; color: var(--muted); }
+.vc-diagram { max-width: 100%; }
+.vc-steps li { margin: 4px 0; }
+.vc-check { margin-top: 10px; padding: 8px 12px; border-radius: var(--radius); font-family: var(--font-ui); }
+.vc-check:empty { display: none; }
+.vc-check--ok { background: var(--ok-soft); color: var(--ok); border: 1px solid var(--ok); }
+.vc-check--bad { background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad); }
+.vc-check ul { margin: 4px 0 0; }
+
+.vc-symbol-key { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.vc-symbol-key li { display: flex; align-items: center; gap: 8px; font-family: var(--font-ui); font-size: 0.9rem; }
+.vc-symbol-key .vc-icon { flex: none; }
+:root[data-theme="dark"] .vc-add .vc-icon { background: #fff; }

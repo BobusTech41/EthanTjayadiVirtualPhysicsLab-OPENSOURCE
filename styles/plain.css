@@ -1,0 +1,57 @@
+/*
+ * Plain theme, loaded last: no shadows, rounded corners, gradients or animation.
+ * Black text on white, grey borders, simple buttons.
+ */
+*, *::before, *::after {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  border-radius: 0 !important;
+  transition: none !important;
+  animation: none !important;
+}
+html, body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); }
+a { color: var(--ink); text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--focus) !important; outline-offset: 2px; }
+
+/* buttons */
+.vl-btn, button.vl-btn, a.vl-btn {
+  background: var(--panel); color: var(--ink); border: 1px solid var(--line-strong);
+  text-decoration: none; background-image: none;
+}
+.vl-btn:hover:not(:disabled) { background: var(--accent-soft); filter: none; }
+.vl-btn--primary, a.vl-btn--primary { background: var(--panel); color: var(--ink); border: 2px solid var(--ink); }
+.vl-btn--primary:hover:not(:disabled) { background: var(--accent-soft); }
+.vl-btn--danger { background: var(--panel); color: var(--bad); border-color: var(--bad); }
+.vl-btn[aria-pressed="true"] { background: var(--accent-soft); }
+
+/* header */
+.vl-header { background: var(--panel); border-bottom: 1px solid var(--line); }
+.vl-brand-mark { display: none; }
+.vl-brand { color: var(--ink); text-decoration: none; }
+
+/* tabs */
+.vl-tabs { background: var(--panel); border-bottom: 1px solid var(--line); }
+.vl-tab { background: var(--panel); color: var(--ink); border: 0; border-bottom: 3px solid transparent; }
+.vl-tab[aria-selected="true"] { background: var(--panel); color: var(--ink); border-bottom-color: var(--ink); }
+
+/* panels, cards, notices, dialogs, toasts */
+.vl-card, .vl-placeholder-card, .vc-template, .vc-selected, .vl-modal, .vl-toast, .vl-notice { background: var(--panel); border: 1px solid var(--line); }
+.vl-toast { color: var(--ink); }
+.vl-modal-backdrop, .vl-modal-root { background: rgba(0, 0, 0, 0.4); }
+
+/* home page: a plain list of features */
+.vl-home-list { list-style: none; padding: 0; margin: 16px 0; max-width: 760px; }
+.vl-home-list li { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.vl-home-list a { font-size: 1.15rem; }
+.vl-home-list span { display: block; color: var(--muted); margin-top: 2px; }
+
+/* keep genuinely round things round */
+.vl-eye-thumb, .vl-eye-icon, .vl-eye-icon::after, .vl-mp-icon, .vd-mark-icon { border-radius: 50% !important; }
+/* headings focused by the page router: no outline box */
+h1[tabindex="-1"]:focus, h1[tabindex="-1"]:focus-visible { outline: none !important; }

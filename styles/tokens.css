@@ -1,0 +1,60 @@
+/* Shared design tokens: a plain black-on-white theme. Every component stylesheet uses these variables. */
+:root {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --paper: #ffffff;
+  --bench: #f4f4f4;         /* apparatus background */
+  --ink: #000000;
+  --muted: #444444;
+  --line: #9a9a9a;
+  --line-strong: #555555;
+  --accent: #000000;        /* buttons, links, selected tab */
+  --accent-ink: #ffffff;
+  --accent-soft: #eeeeee;
+  --ok: #006100;            /* always paired with ✓ and words */
+  --ok-soft: #ffffff;
+  --bad: #b00000;           /* always paired with ✗ and words */
+  --bad-soft: #ffffff;
+  --warn: #000000;
+  --warn-soft: #ffffff;
+  --focus: #000000;         /* focus outline */
+  --grid-major: #9a9a9a;    /* graph paper large squares */
+  --grid-minor: #dddddd;    /* graph paper small squares */
+  --plot-ink: #000000;
+  --skill-mmo: #555555;
+  --skill-pdo: #555555;
+  --skill-ace: #555555;
+  --radius: 0;
+  --gap: 12px;
+  --tap: 44px;
+  --font-ui: Arial, Helvetica, sans-serif;
+  --font-paper: Arial, Helvetica, sans-serif;
+  --font-mono: Arial, Helvetica, sans-serif;
+  --font-size: 16px;
+}
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --panel: #000000;
+  --paper: #000000;
+  --bench: #1a1a1a;
+  --ink: #ffffff;
+  --muted: #cccccc;
+  --line: #777777;
+  --line-strong: #bbbbbb;
+  --accent: #ffffff;
+  --accent-ink: #000000;
+  --accent-soft: #222222;
+  --ok: #8fdc8f;
+  --ok-soft: #000000;
+  --bad: #ff8a80;
+  --bad-soft: #000000;
+  --warn: #ffffff;
+  --warn-soft: #000000;
+  --focus: #ffffff;
+  --grid-major: #777777;
+  --grid-minor: #333333;
+  --plot-ink: #ffffff;
+  --skill-mmo: #aaaaaa;
+  --skill-pdo: #aaaaaa;
+  --skill-ace: #aaaaaa;
+}

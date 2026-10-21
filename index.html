@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Virtual Practical Lab</title>
+  <meta name="description" content="Virtual physics practical lab: experiments, instruments, circuits, tables and graphs.">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="styles/table.css">
+  <link rel="stylesheet" href="styles/graph.css">
+  <link rel="stylesheet" href="styles/instruments.css">
+  <link rel="stylesheet" href="styles/drills.css">
+  <link rel="stylesheet" href="styles/progress.css">
+  <link rel="stylesheet" href="styles/circuit.css">
+  <link rel="stylesheet" href="styles/plain.css">
+</head>
+<body>
+  <a class="vl-skip" href="#app">Skip to main content</a>
+  <header id="app-header" class="vl-header"></header>
+  <main id="app" class="vl-app" tabindex="-1">
+    <p class="vl-boot">Loading the lab…</p>
+    <noscript><p>This lab needs JavaScript. Please enable it and reload.</p></noscript>
+  </main>
+  <div id="modal-root"></div>
+  <div id="toast-root" class="vl-toasts" aria-live="polite"></div>
+
+  <!-- core engines (order matters only for registry before experiments) -->
+  <script src="core/rng.js"></script>
+  <script src="core/sigfig.js"></script>
+  <script src="core/units.js"></script>
+  <script src="core/stats.js"></script>
+  <script src="core/noise.js"></script>
+  <script src="core/uncertainty.js"></script>
+  <script src="core/instruments/base.js"></script>
+  <script src="core/instruments/rules.js"></script>
+  <script src="core/instruments/vernier.js"></script>
+  <script src="core/instruments/micrometer.js"></script>
+  <script src="core/instruments/protractor.js"></script>
+  <script src="core/instruments/balance.js"></script>
+  <script src="core/instruments/cylinder.js"></script>
+  <script src="core/instruments/thermometer.js"></script>
+  <script src="core/instruments/stopwatch.js"></script>
+  <script src="core/instruments/meters.js"></script>
+  <script src="core/datatable.js"></script>
+  <script src="core/graph.js"></script>
+  <script src="core/textmatch.js"></script>
+  <script src="core/marking.js"></script>
+  <script src="core/storage.js"></script>
+  <script src="core/export.js"></script>
+  <script src="core/circuit.js"></script>
+  <script src="core/circuitTemplates.js"></script>
+  <script src="core/registry.js"></script>
+
+  <!-- experiments: one script per experiment -->
+  <script src="experiments/pendulum.js"></script>
+
+  <!-- user interface -->
+  <script src="ui/dom.js"></script>
+  <script src="ui/calculator.js"></script>
+  <script src="ui/apparatusView.js"></script>
+  <script src="ui/paperView.js"></script>
+  <script src="ui/tableView.js"></script>
+  <script src="ui/graphView.js"></script>
+  <script src="ui/uncertaintyView.js"></script>
+  <script src="ui/reportView.js"></script>
+  <script src="ui/timer.js"></script>
+  <script src="ui/shortcuts.js"></script>
+  <script src="ui/instrumentLab.js"></script>
+  <script src="ui/circuitSymbols.js"></script>
+  <script src="ui/circuitBench.js"></script>
+  <script src="ui/circuitLab.js"></script>
+  <script src="ui/drillsView.js"></script>
+  <script src="ui/progressView.js"></script>
+  <script src="ui/app.js"></script>
+</body>
+</html>
